@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+
+// Main notify command
+require('../src/cli');
