@@ -1,0 +1,145 @@
+# GitHub Actions Integration Example
+# Save as: .github/workflows/build-notify.yml
+
+name: Build and Notify
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NOTIFY_SERVER: ${{ secrets.NOTIFY_SERVER_URL }}
+  NOTIFY_TOKEN: ${{ secrets.NOTIFY_AUTH_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Notify build success
+      if: success()
+      run: |
+        curl -X POST "$NOTIFY_SERVER/api/notify" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $NOTIFY_TOKEN" \
+          -d '{
+            "title": "✅ Build Successful",
+            "message": "GitHub Actions build completed successfully for ${{ github.repository }}",
+            "level": "success",
+            "channels": ["desktop", "slack"],
+            "metadata": {
+              "repository": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "actor": "${{ github.actor }}",
+              "workflow": "${{ github.workflow }}",
+              "runId": "${{ github.run_id }}",
+              "buildTime": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            },
+            "tags": ["ci", "github-actions", "build", "success"]
+          }'
+          
+    - name: Notify build failure
+      if: failure()
+      run: |
+        curl -X POST "$NOTIFY_SERVER/api/notify" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $NOTIFY_TOKEN" \
+          -d '{
+            "title": "❌ Build Failed",
+            "message": "GitHub Actions build failed for ${{ github.repository }}",
+            "level": "error",
+            "channels": ["desktop", "slack", "email"],
+            "metadata": {
+              "repository": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "actor": "${{ github.actor }}",
+              "workflow": "${{ github.workflow }}",
+              "runId": "${{ github.run_id }}",
+              "failureTime": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "logsUrl": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            },
+            "tags": ["ci", "github-actions", "build", "failure"],
+            "priority": 5
+          }'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production..."
+        # Your deployment commands here
+        
+    - name: Notify deployment success
+      if: success()
+      run: |
+        curl -X POST "$NOTIFY_SERVER/api/notify" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $NOTIFY_TOKEN" \
+          -d '{
+            "title": "🚀 Deployment Complete",
+            "message": "Production deployment successful for ${{ github.repository }}",
+            "level": "success",
+            "channels": ["desktop", "slack", "email"],
+            "metadata": {
+              "repository": "${{ github.repository }}",
+              "environment": "production",
+              "commit": "${{ github.sha }}",
+              "deployedBy": "${{ github.actor }}",
+              "deployTime": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+            },
+            "tags": ["deployment", "production", "success"],
+            "priority": 4
+          }'
+          
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        curl -X POST "$NOTIFY_SERVER/api/notify" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $NOTIFY_TOKEN" \
+          -d '{
+            "title": "🚨 Deployment Failed",
+            "message": "Production deployment failed for ${{ github.repository }}",
+            "level": "error",
+            "channels": ["desktop", "slack", "email", "sms"],
+            "metadata": {
+              "repository": "${{ github.repository }}",
+              "environment": "production",
+              "commit": "${{ github.sha }}",
+              "failedBy": "${{ github.actor }}",
+              "failureTime": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "logsUrl": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            },
+            "tags": ["deployment", "production", "failure", "critical"],
+            "priority": 5
+          }'
+
+# Required GitHub Secrets:
+# NOTIFY_SERVER_URL - Your notification server URL (e.g., http://your-server.com:3000)
+# NOTIFY_AUTH_TOKEN - Your authentication token

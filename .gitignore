@@ -12,27 +12,16 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+*.lcov
 
 # nyc test coverage
 .nyc_output
 
-# Grunt intermediate storage
-.grunt
-
-# Bower dependency directory
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons
-build/Release
-
-# Dependency directories
-jspm_packages/
-
 # Optional npm cache directory
 .npm
+
+# Optional eslint cache
+.eslintcache
 
 # Optional REPL history
 .node_repl_history
@@ -48,60 +37,26 @@ jspm_packages/
 .env.test
 .env.production
 
-# parcel-bundler cache
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Logs
-logs
-*.log
-
 # Application specific
 config/local.json
-config/local-*.json
-data/
-tmp/
+logs/
 temp/
+.DS_Store
+*.log
 
-# SSL certificates
-*.pem
-*.key
-*.crt
+# SSH Notify Tool specific
+.notifytool/
+plugins/third-party/
+test-config.json
 
-# Build output
+# Deployment artifacts
 dist/
-build/
+*.tgz
+*.checksums
+deployment/docker/.env
+deployment/docker/config/
+deployment/docker/plugins/
+
+# Generated plugin files
+deployment/plugin-examples/*/node_modules/
+deployment/plugin-examples/*/dist/

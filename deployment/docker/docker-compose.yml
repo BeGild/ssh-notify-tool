@@ -1,0 +1,115 @@
+# SSH Notify Tool - Docker Compose Configuration
+version: '3.8'
+
+services:
+  notify-server:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
+      target: production
+    container_name: ssh-notify-tool
+    restart: unless-stopped
+    ports:
+      - "${NOTIFY_PORT:-3000}:3000"
+    environment:
+      # Server Configuration
+      - NODE_ENV=production
+      - NOTIFY_AUTH_TOKEN=${NOTIFY_AUTH_TOKEN:-change-me-in-production}
+      
+      # Email Configuration
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_FROM=${SMTP_FROM}
+      - EMAIL_TO=${EMAIL_TO}
+      
+      # Slack Configuration
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      
+      # DingTalk Configuration
+      - DINGTALK_WEBHOOK_URL=${DINGTALK_WEBHOOK_URL}
+      - DINGTALK_SECRET=${DINGTALK_SECRET}
+      
+      # SMS Configuration (Twilio)
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_FROM=${TWILIO_FROM}
+      - SMS_TO=${SMS_TO}
+      
+      # WeChat Work Configuration
+      - WECHAT_WEBHOOK_URL=${WECHAT_WEBHOOK_URL}
+      
+    volumes:
+      # Configuration
+      - ./config:/app/config:ro
+      - ./plugins:/app/plugins:ro
+      
+      # Persistent data
+      - notify-logs:/app/logs
+      
+    networks:
+      - notify-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    labels:
+      - "com.docker.compose.project=ssh-notify-tool"
+      - "com.docker.compose.service=notify-server"
+
+  # Development service
+  notify-dev:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
+      target: development
+    container_name: ssh-notify-tool-dev
+    ports:
+      - "${NOTIFY_DEV_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=development
+      - NOTIFY_AUTH_TOKEN=dev-token-change-me
+    volumes:
+      - ../../src:/app/src:ro
+      - ../../docs:/app/docs:ro
+      - ./config:/app/config:ro
+      - ./plugins:/app/plugins:ro
+      - notify-dev-logs:/app/logs
+    networks:
+      - notify-network
+    profiles:
+      - dev
+
+  # Testing service  
+  notify-test:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
+      target: testing
+    container_name: ssh-notify-tool-test
+    environment:
+      - NODE_ENV=test
+    volumes:
+      - ../../:/app:ro
+    networks:
+      - notify-network
+    profiles:
+      - test
+
+volumes:
+  notify-logs:
+    driver: local
+  notify-dev-logs:
+    driver: local
+
+networks:
+  notify-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
