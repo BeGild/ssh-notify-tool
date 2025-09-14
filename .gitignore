@@ -60,3 +60,5 @@ deployment/docker/plugins/
 # Generated plugin files
 deployment/plugin-examples/*/node_modules/
 deployment/plugin-examples/*/dist/
+
+.spec-workflow
