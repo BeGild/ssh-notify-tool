@@ -57,10 +57,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ssh-notify-tool/ssh-notify-tool.git"
+    "url": "https://github.com/BeGild/ssh-notify-tool.git"
   },
   "bugs": {
-    "url": "https://github.com/ssh-notify-tool/ssh-notify-tool/issues"
+    "url": "https://github.com/BeGild/ssh-notify-tool/issues"
   },
-  "homepage": "https://github.com/ssh-notify-tool/ssh-notify-tool#readme"
+  "homepage": "https://github.com/BeGild/ssh-notify-tool#readme"
 }
